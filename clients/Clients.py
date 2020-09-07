@@ -48,9 +48,10 @@ class TvMazeClient(BaseClient):
         results = []
         filter_object = query.filter
 
-        # Search by id lookup
-        # for id_name in ['tvrage', 'thetvdb', 'imdb']:
-        for id_name in self.supported_filters.remove('term'):
+        # copy supported_filters
+        lookups = list(self.supported_filters)
+        lookups.remove('term')
+        for id_name in lookups:
             if getattr(filter_object, id_name):
                 result = self._search_by_id(
                     id_name, getattr(filter_object, id_name))
@@ -60,10 +61,11 @@ class TvMazeClient(BaseClient):
         if filter_object.term:
             results_by_term = requests.get(
                 f'{self.base_url}/search/shows', params={'q': filter_object.term})
-            results.append(results_by_term.json())
+            results += results_by_term.json()
 
         return results
 
+    # Search by id lookup
     def _search_by_id(self, id_name, id_value):
         r = requests.get(f'{self.base_url}/lookup/shows',
                          params={id_name: id_value})
@@ -88,11 +90,11 @@ class CRCINDClient(BaseClient):
 
                 r = self.client.service.GetListByName(
                     getattr(filter_object, id_name))
-
-                if not isinstance(r, list):
-                    results.append(r)
-                else:
-                    results += r
+                if r:
+                    if not isinstance(r, list):
+                        results.append(r)
+                    else:
+                        results += r
 
         return results
 
