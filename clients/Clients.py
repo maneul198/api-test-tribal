@@ -1,7 +1,7 @@
 import requests
 import abc
 from typing import List
-from zeep import Client
+from zeep import Client as SOAPClient
 from schemas import Query, MediaTypeEnum, SearchResults
 
 
@@ -31,7 +31,8 @@ class ItunesClient(BaseClient):
     def _service_integration(self, query: Query) -> List:
         filter_object = query.filter
         params = {
-            k: getattr(filter_object, k) for k in self.supported_filters if getattr(filter_object, k) is not None
+            k: getattr(filter_object, k) for k in self.supported_filters
+            if getattr(filter_object, k) is not None
         }
         params['entity'] = query.type
         r = requests.get(f"{self.base_url}/search", params=params)
@@ -60,7 +61,8 @@ class TvMazeClient(BaseClient):
         # Search by term
         if filter_object.term:
             results_by_term = requests.get(
-                f'{self.base_url}/search/shows', params={'q': filter_object.term})
+                f'{self.base_url}/search/shows',
+                params={'q': filter_object.term})
             results += results_by_term.json()
 
         return results
@@ -80,7 +82,7 @@ class CRCINDClient(BaseClient):
 
     def __init__(self):
         super().__init__()
-        self.client = Client(self.base_url)
+        self.client = SOAPClient(self.base_url)
 
     def _service_integration(self, query: Query) -> List:
         filter_object = query.filter
@@ -119,6 +121,7 @@ class ClientProvider:
             client_results = client.execute_query(query)
             results.append(
                 SearchResults(source=client.name,
-                              results=client_results, count=len(client_results))
+                              results=client_results,
+                              count=len(client_results))
             )
         return results
